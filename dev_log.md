@@ -6,13 +6,19 @@
 
 **今日完成**
 
-    完成规则书与企划书初稿
+    项目初始化：仓库、虚拟环境、codex、基础 loop（arcade 窗口、场景状态机）、灰盒地图（20×15）
+    
+    数据驱动骨架：data/ 下 JSON（parts.json、weapons.json、enemies.json、waves.json、tiles.json）
+    
+    定义调参面板与调试覆盖层
 
-    完成玩家控制系统的编写，支持上下左右移动
+    完成规则书与企划书初稿
 
     初始化项目仓库并上传到 GitHub
 
-    配置了开发环境，安装了必要的库（如 arcade）
+    完成玩家控制系统的编写，支持上下左右移动
+    
+<img width="81" height="25" alt="image" src="https://github.com/user-attachments/assets/a322bac2-8ff3-4751-a1e2-cbb59b3a8125" />
 
 **遇到问题与解决**
 
