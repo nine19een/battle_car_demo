@@ -17,8 +17,6 @@
     初始化项目仓库并上传到 GitHub
 
     完成玩家控制系统的编写，支持上下左右移动
-    
-<img width="81" height="25" alt="image" src="https://github.com/user-attachments/assets/a322bac2-8ff3-4751-a1e2-cbb59b3a8125" />
 
 **遇到问题与解决**
 
@@ -32,10 +30,10 @@ Arcade 模块无法导入
 
 **明日计划**
 
-    项目初始化：仓库、虚拟环境、基础 loop（arcade 窗口、场景状态机）、灰盒地图（20×15）
-
-    数据驱动骨架：data/ 下 JSON（parts.json、weapons.json、enemies.json、waves.json、tiles.json）
-
-    定义调参面板与调试覆盖层
+    规则书/企划书定稿
+    
+    完成数据表内容固化
+    
+    资源占位与 Player 控制器雏形实现（推力、最大速、转向力、抓地力四参数）
 
 ---
