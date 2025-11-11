@@ -129,6 +129,10 @@ class Game(arcade.Window):
         # Spawn initial enemies
         self._spawn_enemies(random.randint(2, 4))
 
+        # --- Debug HUD ---
+        self.debug_hud = True
+        self._debug_font = 14
+
     def _build_level(self):
         for r, row in enumerate(LEVEL):
             for c, ch in enumerate(row):
@@ -184,6 +188,7 @@ class Game(arcade.Window):
         self.dash_decay = p["dash_decay"]
         self.dash_transfer = p["dash_transfer"]
         self.grip_mode = mode
+        self.surface_cfg = p
     def _random_open_positions(self) -> list[tuple[int, int]]:
         opens: list[tuple[int, int]] = []
         for r, row in enumerate(LEVEL):
@@ -303,6 +308,9 @@ class Game(arcade.Window):
         if key == arcade.key.KEY_0:
             self._apply_grip_preset("mud")
 
+        if key == arcade.key.F3:
+            self.debug_hud = not self.debug_hud
+
     def on_key_release(self, key, modifiers):
         # prevent sticky keys on release
         self.keys.discard(key)
@@ -323,6 +331,8 @@ class Game(arcade.Window):
                 arcade.color.YELLOW,
                 2,
             )
+            arcade.draw_text(f"spd={int(math.hypot(self.player_vel_x, self.player_vel_y))}", 10, 20, arcade.color.BLACK, 14)
+
 
         ammo_text = f"MG[{self.weapon_quality}] {self.ammo_in_mag}/{self.mag_size}"
         if self.reloading:
@@ -333,6 +343,7 @@ class Game(arcade.Window):
         arcade.draw_text(ammo_text, 10, SCREEN_H - 50, arcade.color.BLACK, 14)
         arcade.draw_text(dash_text, 10, SCREEN_H - 70, arcade.color.BLACK, 14)
         arcade.draw_text(f"Grip: {getattr(self, 'grip_mode', 'medium')}", 10, SCREEN_H - 90, arcade.color.BLACK, 14)
+        self._draw_debug_hud()
 
     def on_update(self, dt: float):
         if dt <= 0:
@@ -644,6 +655,68 @@ class Game(arcade.Window):
         dx = (1 if kb[arcade.key.D] else 0) - (1 if kb[arcade.key.A] else 0)
         dy = (1 if kb[arcade.key.W] else 0) - (1 if kb[arcade.key.S] else 0)
         return dx, dy
+
+    def _dbg_line(self, lines, label, value):
+        try:
+            txt = f"{label}: {value}"
+        except Exception:
+            txt = f"{label}: <err>"
+        lines.append(txt)
+
+    def _draw_debug_hud(self):
+        if not getattr(self, "debug_hud", False):
+            return
+
+        lines: list[str] = []
+        spd = math.hypot(getattr(self, "player_vel_x", 0.0), getattr(self, "player_vel_y", 0.0))
+        self._dbg_line(lines, "FPS", f"{arcade.get_fps():.0f}")
+        self._dbg_line(lines, "Speed", f"{spd:.1f}")
+        self._dbg_line(lines, "vel_x", f"{getattr(self, 'player_vel_x', 0.0):.1f}")
+        self._dbg_line(lines, "vel_y", f"{getattr(self, 'player_vel_y', 0.0):.1f}")
+
+        self._dbg_line(lines, "move_vx", f"{getattr(self, 'move_vel_x', 0.0):.1f}")
+        self._dbg_line(lines, "move_vy", f"{getattr(self, 'move_vel_y', 0.0):.1f}")
+        self._dbg_line(lines, "dash_vx", f"{getattr(self, 'dash_vel_x', 0.0):.1f}")
+        self._dbg_line(lines, "dash_vy", f"{getattr(self, 'dash_vel_y', 0.0):.1f}")
+
+        self._dbg_line(lines, "dash_cd", f"{getattr(self, 'dash_cooldown', 0.0):.2f}")
+        self._dbg_line(lines, "dash_impulse", f"{getattr(self, 'dash_impulse', 0.0):.1f}")
+        self._dbg_line(lines, "dash_max_speed", f"{getattr(self, 'dash_max_speed', 0.0):.1f}")
+        self._dbg_line(lines, "dash_decay", f"{getattr(self, 'dash_decay', 0.0):.2f}")
+
+        surface_name = getattr(self, "surface_name", None) or getattr(self, "terrain_name", None) or getattr(self, "grip_mode", "N/A")
+        self._dbg_line(lines, "surface", surface_name)
+
+        cfg = None
+        if hasattr(self, "surface_cfg"):
+            cfg = self.surface_cfg
+        elif hasattr(self, "terrain_cfg"):
+            cfg = self.terrain_cfg
+
+        if isinstance(cfg, dict):
+            self._dbg_line(lines, "player_max_speed", cfg.get("player_max_speed", "N/A"))
+            self._dbg_line(lines, "traction_accel", cfg.get("traction_accel", "N/A"))
+            self._dbg_line(lines, "roll_friction", cfg.get("roll_friction", "N/A"))
+            self._dbg_line(lines, "roll_drag", cfg.get("roll_drag", "N/A"))
+            self._dbg_line(lines, "steer_align", cfg.get("steer_align", "N/A"))
+            self._dbg_line(lines, "min_speed_cut", cfg.get("min_speed_cut", "N/A"))
+            self._dbg_line(lines, "dash_decay(surf)", cfg.get("dash_decay", "N/A"))
+            self._dbg_line(lines, "dash_transfer", cfg.get("dash_transfer", "N/A"))
+        else:
+            for k in ["player_max_speed", "traction_accel", "roll_friction", "roll_drag", "steer_align", "min_speed_cut"]:
+                self._dbg_line(lines, k, getattr(self, k, "N/A"))
+
+        if hasattr(self, "weapon_quality"):
+            self._dbg_line(lines, "weapon", self.weapon_quality)
+        if hasattr(self, "ammo_in_mag"):
+            self._dbg_line(lines, "ammo", f"{self.ammo_in_mag}/{getattr(self, 'mag_size', '?')}")
+        if hasattr(self, "fire_cd"):
+            self._dbg_line(lines, "fire_cd", f"{self.fire_cd:.2f}")
+
+        x, y = 10, self.height - 120
+        font = getattr(self, "_debug_font", 14)
+        for i, txt in enumerate(lines):
+            arcade.draw_text(txt, x, y - i * (font + 2), arcade.color.BLACK, font)
 
 if __name__ == "__main__":
     Game()
